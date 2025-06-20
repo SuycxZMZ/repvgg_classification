@@ -39,6 +39,16 @@ pip install torch torchvision opencv-python onnx onnxruntime onnxsim tqdm
 ### 1. 训练（指定ImageNet预训练权重）
 ```bash
 python main.py --mode train --pretrained_path "/Users/yuansu/Code/repvgg_classification/pretrained/RepVGG-A0-train.pth"
+
+# 简单猫狗识别数据集下载地址----> https://www.modelscope.cn/datasets/tany0699/cats_and_dogs
+# 下载解压之后的数据集格式
+cats_and_dogs
+   train
+      cat
+      dog
+   val
+      cat
+      dog
 ```
 - `--pretrained_path` 指定ImageNet预训练权重路径。
 
