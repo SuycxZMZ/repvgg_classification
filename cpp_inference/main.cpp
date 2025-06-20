@@ -7,12 +7,18 @@
 #include <iomanip> // for std::setprecision
 #include <cmath>   // for std::exp
 
+// --------------------------------------------------------
+// RepVGG C++ 推理脚本
+// 支持单张图片或文件夹批量推理，自动输出类别和置信度
+// 需配合 ONNX Runtime C++ API 和 OpenCV
+// --------------------------------------------------------
+
 namespace fs = std::filesystem;
 
-// 类别名
+// 类别名（需与训练时类别顺序一致）
 const std::vector<std::string> class_names = {"cat", "dog"};
 
-// 图像预处理函数
+// 图像预处理函数：对输入图片进行resize、BGR转RGB、归一化、NCHW排列
 std::vector<float> preprocess(const cv::Mat& img, int img_size) {
     // 1. resize
     cv::Mat resized;
@@ -41,7 +47,7 @@ std::vector<float> preprocess(const cv::Mat& img, int img_size) {
     return input_tensor_values;
 }
 
-// 计算softmax
+// 计算softmax概率分布
 std::vector<float> softmax(const float* logits, size_t n) {
     std::vector<float> probs(n);
     float max_logit = *std::max_element(logits, logits + n);
@@ -56,6 +62,7 @@ std::vector<float> softmax(const float* logits, size_t n) {
     return probs;
 }
 
+// 单张图片推理与结果打印
 void infer_image(const std::string& image_path, Ort::Session& session, Ort::AllocatorWithDefaultOptions& allocator, int img_size) {
     cv::Mat img = cv::imread(image_path);
     if (img.empty()) {
@@ -96,6 +103,7 @@ void infer_image(const std::string& image_path, Ort::Session& session, Ort::Allo
     std::cout << "\n";
 }
 
+// 主程序入口，支持单张图片或文件夹批量推理
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         std::cout << "用法: " << argv[0] << " <onnx模型路径> <图片路径或文件夹> [图片尺寸, 默认224]" << std::endl;
@@ -105,11 +113,13 @@ int main(int argc, char* argv[]) {
     std::string input_path = argv[2];
     int img_size = argc > 3 ? std::stoi(argv[3]) : 224;
 
+    // 初始化 ONNX Runtime 环境与会话
     Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "RepVGG_Inference");
     Ort::SessionOptions session_options;
     Ort::Session session(env, model_path.c_str(), session_options);
     Ort::AllocatorWithDefaultOptions allocator;
 
+    // 判断输入路径类型，支持批量推理
     if (fs::is_directory(input_path)) {
         for (const auto& entry : fs::directory_iterator(input_path)) {
             if (entry.is_regular_file()) {

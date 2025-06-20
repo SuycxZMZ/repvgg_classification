@@ -3,11 +3,19 @@ import argparse
 import os
 from model.repvgg import get_RepVGG_func_by_name, repvgg_model_convert
 
+# --------------------------------------------------------
+# RepVGG 权重转换脚本
+# 用于将训练得到的权重（多分支结构）转换为推理部署权重（单分支结构）
+# 适用于模型部署前的权重格式转换
+# --------------------------------------------------------
+
 def convert(model_name, input_path, output_path=None, num_classes=2):
+    # 构建训练结构的模型
     func = get_RepVGG_func_by_name(model_name)
     model = func(deploy=False)  # 构建训练版
-    model.linear = torch.nn.Linear(model.linear.in_features, num_classes)  # ✅ 替换为你训练时的头
+    model.linear = torch.nn.Linear(model.linear.in_features, num_classes)  # 替换为你训练时的头
 
+    # 加载训练权重
     checkpoint = torch.load(input_path, map_location='cpu')
     if 'model_state_dict' in checkpoint:
         state_dict = checkpoint['model_state_dict']
@@ -16,6 +24,7 @@ def convert(model_name, input_path, output_path=None, num_classes=2):
     model.load_state_dict(state_dict)  # 权重正确加载
     print(f"✅ Loaded checkpoint from {input_path}")
 
+    # 转为 deploy 结构
     deploy_model = repvgg_model_convert(model)  # 转为 deploy
 
     # 自动保存路径（未指定）

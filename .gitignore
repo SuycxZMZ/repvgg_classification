@@ -26,6 +26,22 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# C++/CMake/Make 编译中间文件和产物
+cpp_inference/build/
+cpp_inference/CMakeFiles/
+cpp_inference/Makefile
+cpp_inference/cmake_install.cmake
+cpp_inference/CMakeCache.txt
+cpp_inference/*.o
+cpp_inference/*.obj
+cpp_inference/*.exe
+cpp_inference/*.out
+cpp_inference/*.a
+cpp_inference/*.dylib
+cpp_inference/*.dll
+cpp_inference/*.so
+cpp_inference/*~
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -158,3 +174,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+checkpoints/
+cpp_inference/checkpoints/
+pretrained/

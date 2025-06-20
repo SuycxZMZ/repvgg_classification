@@ -7,6 +7,11 @@ from utils import accuracy, save_checkpoint, print_model_info, get_checkpoint_di
 from config import config
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
+# ---------------------------
+# RepVGG 训练主流程
+# 支持预训练权重加载、自动保存最佳模型
+# ---------------------------
+
 def train():
     train_loader, val_loader = get_dataloaders()
     model = build_model(config['model_name'],
@@ -17,6 +22,7 @@ def train():
     print_model_info(model, image_size=config['image_size'])
 
     # 只加载训练中断时的checkpoint
+    # 如果use_pretrained为False，说明是继续训练
     if config['pretrained_path'] and not config['use_pretrained']:
         checkpoint = torch.load(config['pretrained_path'], map_location=config['device'])
         if 'model_state_dict' in checkpoint:
@@ -25,6 +31,7 @@ def train():
         else:
             raise ValueError("❌ 加载失败：权重文件不包含 model_state_dict，请检查路径是否为训练checkpoint而非ImageNet预训练权重")
 
+    # 损失函数与优化器
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(),
                           lr=config['lr'],
@@ -40,7 +47,7 @@ def train():
         total_loss, total_acc = 0, 0
         pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{config["epochs"]}')
 
-        # Warmup逻辑（前三轮）
+        # Warmup逻辑（前三轮）：逐步提升学习率和动量，防止初始震荡
         warmup_epochs = 3
         if epoch < warmup_epochs:
             lr_scale = (epoch + 1) / warmup_epochs
@@ -61,6 +68,7 @@ def train():
             total_acc += acc
             pbar.set_postfix(loss=loss.item(), acc=acc)
 
+        # 每轮结束后在验证集评估
         val_acc = validate(model, val_loader)
         if val_acc > best_acc:
             best_acc = val_acc
@@ -68,6 +76,7 @@ def train():
 
         scheduler.step()  # cosine调整
 
+# 验证集评估函数
 def validate(model, val_loader):
     model.eval()
     total_acc = 0

@@ -1,4 +1,4 @@
-# RepVGG 分类模型全流程教学项目 🚀
+# RepVGG 图像分类模型训练部署简单流程 🚀
 
 本项目以 RepVGG 为核心，覆盖了**模型训练、验证、推理、权重转换、ONNX 导出、C++高效部署**等全流程，适合深度学习入门与工程实战教学。
 
@@ -6,8 +6,9 @@
 
 ## 目录
 - [环境准备](#环境准备)
-- [Python 端训练/验证/推理/权重导出](#python-端训练验证推理权重导出)
-- [C++ 端高效部署与推理](#c-端高效部署与推理)
+- [Python 端典型命令与说明](#python-端典型命令与说明)
+- [C++ 端典型命令与说明](#c-端典型命令与说明)
+- [C++ 依赖安装与环境配置](#c-依赖安装与环境配置)
 - [Python & C++ 速度对比](#python--c-速度对比)
 - [VGG家族与RepVGG模型原理详解](#vgg家族与repvgg模型原理详解)
 - [结构重参数化宇宙简述](#结构重参数化宇宙简述)
@@ -29,6 +30,72 @@ pip install torch torchvision opencv-python onnx onnxruntime onnxsim tqdm
 
 ---
 
+## Python 端典型命令与说明
+
+> **注意：所有权重文件路径、数据集路径请根据你本地实际情况修改！**
+
+### 1. 训练（指定ImageNet预训练权重）
+```bash
+python main.py --mode train --pretrained_path "/Users/yuansu/Code/repvgg_classification/pretrained/RepVGG-A0-train.pth"
+```
+- `--pretrained_path` 指定ImageNet预训练权重路径。
+
+### 2. 推理（训练权重）
+```bash
+python main.py --mode "inference" --input "/Users/yuansu/Desktop/codes/datasets/cats_and_dogs/val/cat"
+```
+- `--input` 可为单张图片或文件夹。
+- 默认使用config.py中指定的训练权重。
+
+### 3. 权重转换（训练权重→部署权重）
+```bash
+python convert.py --model "RepVGG-A0" --input "/Users/yuansu/Code/repvgg_classification/checkpoints/RepVGG-A0_1/RepVGG-A0_4/best.pth"
+```
+- `--input` 为训练得到的best.pth。
+- `--output` 可省略，默认与输入同目录。
+
+### 4. 使用重参数化权重推理
+```bash
+python main.py --mode "inference" --input "/Users/yuansu/Desktop/codes/datasets/cats_and_dogs/val/dog" --checkpoint_path "/Users/yuansu/Code/repvgg_classification/checkpoints/RepVGG-A0_1/RepVGG-A0_4/deploy.pth" --deploy True
+```
+- `--checkpoint_path` 指定deploy.pth。
+- `--deploy True` 表示推理结构。
+
+### 5. Python下转换前后推理速度对比
+```bash
+python benchmark.py --model RepVGG-A0 --train_weights /Users/yuansu/Code/repvgg_classification/checkpoints/RepVGG-A0_1/RepVGG-A0_4/best.pth --deploy_weights /Users/yuansu/Code/repvgg_classification/checkpoints/RepVGG-A0_1/RepVGG-A0_4/deploy.pth --num_classes 2
+```
+- 对比训练结构和deploy结构的推理速度。
+
+### 6. 导出ONNX权重
+```bash
+python export_onnx.py --weights /Users/yuansu/Code/repvgg_classification/checkpoints/RepVGG-A0_1/RepVGG-A0_4/deploy.pth --model "RepVGG-A0"
+```
+- `--weights` 指deploy.pth。
+- `--output` 可省略，默认同目录。
+
+---
+
+## C++ 端典型命令与说明
+
+> **注意：C++推理和benchmark命令中的ONNX权重路径、图片路径等也需根据实际情况修改！**
+
+### 1. 推理（编译后可执行文件）
+```bash
+./repvgg_inference /Users/yuansu/Code/repvgg_classification/cpp_inference/checkpoints/deploy.onnx /Users/yuansu/Desktop/codes/datasets/cats_and_dogs/val/dog 224
+```
+- 第一个参数为ONNX模型路径，第二个为图片或文件夹路径，第三个为图片尺寸。
+
+### 2. C++版本速度测试
+```bash
+./benchmark_onnx /Users/yuansu/Code/repvgg_classification/cpp_inference/checkpoints/deploy.onnx 224 100 500
+```
+- 100为预热次数，500为测试次数。
+
+> **提示：ONNX系统库报错可忽略，不影响实际推理和速度测试。**
+
+---
+
 ## C++ 依赖安装与环境配置
 
 | 平台   | ONNX Runtime 安装                | OpenCV 安装                | CMake 安装                |
@@ -39,86 +106,6 @@ pip install torch torchvision opencv-python onnx onnxruntime onnxsim tqdm
 > **注意：**
 > - Ubuntu下如需更高性能，可从[ONNX Runtime官方](https://onnxruntime.ai/)源码编译，支持OpenMP/MKL等。
 > - OpenCV建议用系统包或源码编译，确保有C++头文件和动态库。
-
----
-
-## Python 端训练/验证/推理/权重导出
-
-### 1. 训练模型
-```bash
-python train.py
-```
-
-### 2. 验证模型
-```bash
-python main.py --mode val
-```
-
-### 3. 单张图片/文件夹推理
-```bash
-# --img_path 后面可以是图片文件路径，也可以是文件夹路径
-python inference.py --img_path /path/to/image.jpg      # 推理单张图片
-python inference.py --img_path /path/to/folder/        # 推理文件夹下所有图片
-```
-> `/path/to/image.jpg` 请替换为你自己的图片路径，`/path/to/folder/` 替换为包含图片的文件夹路径。
-
-### 4. 权重转换（训练权重 → 部署权重）
-```bash
-# --input 指训练得到的权重文件路径（如 best.pth）
-# --output 指转换后部署权重的保存路径（如 deploy.pth）
-python convert.py --model RepVGG-A0 --input ./checkpoints/RepVGG-A0_4/best.pth --output ./checkpoints/RepVGG-A0_4/deploy.pth --num_classes 2
-```
-> 路径可根据实际训练输出位置调整。
-
-### 5. 导出 ONNX 权重
-```bash
-# --weights 指 deploy.pth 路径，--output 指导出的 onnx 文件保存路径
-python export_onnx.py --model RepVGG-A0 --weights ./checkpoints/RepVGG-A0_4/deploy.pth --output ./checkpoints/RepVGG-A0_4/deploy.onnx --num_classes 2
-```
-> 建议将 onnx 文件保存在与权重同目录，便于管理。
-
-### 6. Python 端 Benchmark
-```bash
-python benchmark.py
-```
-
----
-
-## C++ 端高效部署与推理
-
-### 1. 编译 C++ 代码
-
-#### macOS
-```bash
-cd cpp_inference
-mkdir -p build && cd build
-cmake ..
-make
-```
-
-#### Ubuntu (Linux)
-```bash
-cd cpp_inference
-mkdir -p build && cd build
-cmake ..
-make
-```
-> 如遇到找不到 onnxruntime/opencv 的头文件或库，请在 CMakeLists.txt 中手动指定路径。
-
-### 2. C++ 推理命令
-- **单张图片/文件夹分类**
-  ```bash
-  # 第一个参数为 onnx 模型路径，第二个为图片或文件夹路径，第三个为图片尺寸（如224）
-  ./repvgg_inference ../../checkpoints/RepVGG-A0_4/deploy.onnx /path/to/image_or_folder 224
-  ```
-  > `../../checkpoints/RepVGG-A0_4/deploy.onnx` 路径是相对于 build 目录的，注意根据实际情况调整。
-  > `/path/to/image_or_folder` 可为单张图片或图片文件夹。
-- **C++ Benchmark**
-  ```bash
-  # 第一个参数为 onnx 模型路径，第二个为图片尺寸，第三/四个为预热和测试次数
-  ./benchmark_onnx ../../checkpoints/RepVGG-A0_4/deploy.onnx 224 20 100
-  ```
-  > 路径同上，参数可根据实际需求调整。
 
 ---
 
@@ -140,10 +127,44 @@ make
 
 ## VGG家族与RepVGG模型原理详解
 
-### 1. VGG家族发展简述
-- **VGG（2014）**：提出极简的卷积网络结构（3x3卷积+2x2池化+全连接），极大推动了深度学习模型的标准化。
-- **VGG16/VGG19**：加深网络层数，提升表达能力，但参数量大、推理慢。
-- **后续改进**：ResNet、DenseNet等引入残差/密集连接，提升性能和效率。
+### 1. VGG网络推理原理详解
+
+VGG网络是一种典型的深层卷积神经网络，其推理流程如下：
+
+1. **图片输入**
+   - 输入一张RGB图片，通常会resize为224x224像素，归一化到[0,1]或[-1,1]。
+
+2. **卷积层（Conv）**
+   - 多个3x3卷积核滑动窗口提取局部特征，每个卷积核可看作一个特征检测器。
+   - 每一层卷积后，输出特征图（feature map），通道数逐层增加（如64→128→256→512）。
+   - 卷积操作本质：对输入的每个小区域与卷积核做加权求和，输出一个新像素。
+
+3. **激活函数（ReLU）**
+   - 每个卷积层后接ReLU激活，增加非线性表达能力。
+   - 公式：`y = max(0, x)`，抑制负值，保留正值。
+
+4. **池化层（Pooling）**
+   - 通常为2x2最大池化（MaxPooling），每2x2区域取最大值，降低空间分辨率，减少参数和计算量。
+   - 池化有助于提取更具鲁棒性的特征，抑制噪声。
+
+5. **多层卷积+池化堆叠**
+   - VGG16/19等网络会堆叠多组"卷积+ReLU+池化"，逐步提取从低级到高级的特征。
+
+6. **展平（Flatten）**
+   - 最后一个池化层输出的特征图展平成一维向量，作为全连接层输入。
+
+7. **全连接层（FC）**
+   - 一般有2-3个全连接层，模拟传统MLP，进一步融合全局特征。
+   - 最后一层输出的向量长度等于类别数（如1000）。
+
+8. **Softmax输出**
+   - 对最后一层输出做softmax归一化，得到每个类别的概率。
+   - 取概率最大者为最终预测类别。
+
+**推理流程举例：**
+> 一张猫的图片输入VGG16，经过多层卷积提取边缘、纹理、形状等特征，池化降维，全连接层融合全局信息，softmax输出"cat"类别概率最大，模型最终判定为"cat"。
+
+---
 
 ### 2. RepVGG原理与创新
 - **核心思想**：训练时用多分支结构（3x3卷积、1x1卷积、Identity），推理时将多分支结构重参数化为单一3x3卷积，兼顾训练性能和推理速度。

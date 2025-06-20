@@ -11,6 +11,12 @@ from dataset import infer_channels
 from model.repvgg import get_RepVGG_func_by_name
 from PIL import Image
 
+# --------------------------------------------------------
+# RepVGG 推理脚本
+# 支持单张图片或文件夹批量推理，自动输出类别和置信度
+# 支持与训练一致的预处理
+# --------------------------------------------------------
+
 def prepare_transform(image_size, channels):
     """推理用transform（与训练一致）"""
     normalize_mean = [0.5] * channels

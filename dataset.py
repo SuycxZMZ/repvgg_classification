@@ -4,6 +4,11 @@ from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 from config import config
 
+# --------------------------------------------------------
+# 数据集加载与预处理工具
+# 支持自动推测通道数、标准化、批量加载等
+# --------------------------------------------------------
+
 def infer_channels(root_dir):
     """自动推测图片通道（1或3）"""
     for class_folder in os.listdir(root_dir):

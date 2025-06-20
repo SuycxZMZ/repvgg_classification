@@ -6,6 +6,12 @@
 #include <iomanip>
 #include <thread>
 
+// --------------------------------------------------------
+// RepVGG C++ ONNX Runtime Benchmark 脚本
+// 用于测试ONNX模型在C++端的推理延迟和吞吐量
+// 支持命令行参数灵活指定模型、输入尺寸、预热/测试轮数等
+// --------------------------------------------------------
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cout << "用法: " << argv[0] << " <onnx模型路径> [图片尺寸, 默认224] [预热次数, 默认20] [测试次数, 默认100]\n";
@@ -35,7 +41,7 @@ int main(int argc, char* argv[]) {
     const char* input_name = input_name_ptr.get();
     const char* output_name = output_name_ptr.get();
 
-    // 3. 构造虚拟输入
+    // 3. 构造虚拟输入（全1，shape为1x3x224x224）
     std::vector<int64_t> input_dims = {1, 3, image_size, image_size};
     size_t input_tensor_size = 1 * 3 * image_size * image_size;
     std::vector<float> input_tensor_values(input_tensor_size, 1.0f); // 全1
@@ -46,7 +52,7 @@ int main(int argc, char* argv[]) {
     std::vector<const char*> input_names = {input_name};
     std::vector<const char*> output_names = {output_name};
 
-    // 4. 预热
+    // 4. 预热（不计入统计）
     std::cout << "🔥 正在预热..." << std::endl;
     for (int i = 0; i < warmup; ++i) {
         session.Run(Ort::RunOptions{nullptr}, input_names.data(), &input_tensor, 1, output_names.data(), 1);

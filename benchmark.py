@@ -5,11 +5,16 @@ import numpy as np
 import os
 from model.repvgg import get_RepVGG_func_by_name
 
+# --------------------------------------------------------
+# RepVGG 训练与部署模型推理速度基准测试脚本
+# 用于对比训练结构（多分支）和部署结构（单分支）模型的推理速度
+# 支持命令行参数灵活指定模型、权重、输入尺寸、测试轮数等
+# --------------------------------------------------------
+
 def run_benchmark(model_name, model, device, image_size, warmup_runs=20, benchmark_runs=100):
     """
     运行指定模型的基准测试。
-
-    :param model_name: 模型的可读名称（例如 "训练模型"）
+    :param model_name: 模型的可读名称（例如 \"训练模型\"）
     :param model: 要测试的 PyTorch 模型
     :param device: 运行设备 ('cpu' or 'cuda')
     :param image_size: 输入图像的尺寸
@@ -121,7 +126,6 @@ def benchmark(args):
     
     print("="*50)
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RepVGG 训练与部署模型推理速度基准测试')
     parser.add_argument('--model', type=str, default='RepVGG-A0', help='模型名称，如 RepVGG-A0')
@@ -133,6 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('--runs', type=int, default=100, help='基准测试运行次数')
     args = parser.parse_args()
 
+    # 为了公平对比，强制PyTorch只用单线程
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
 

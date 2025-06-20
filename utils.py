@@ -2,6 +2,11 @@ import torch
 from ptflops import get_model_complexity_info
 import os
 
+# --------------------------------------------------------
+# 工具函数集合
+# 包含准确率计算、模型信息打印、checkpoint保存等
+# --------------------------------------------------------
+
 def accuracy(preds, labels):
     _, pred_classes = torch.max(preds, dim=1)
     return (pred_classes == labels).float().mean().item()
