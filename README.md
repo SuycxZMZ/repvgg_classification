@@ -26,6 +26,7 @@ conda activate repvgg
 
 ### 2. 安装 Python 依赖
 ```bash
+# 训练或者推理验证过程中，缺啥包，用pip装啥包就行
 pip install torch torchvision opencv-python onnx onnxruntime onnxsim tqdm
 ```
 
