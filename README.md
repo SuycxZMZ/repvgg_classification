@@ -92,6 +92,34 @@ python export_onnx.py --weights /Users/yuansu/Code/repvgg_classification/checkpo
 
 ## C++ 端典型命令与说明
 
+### 编译步骤
+
+1. **进入C++推理目录**
+```bash
+cd cpp_inference
+```
+
+2. **创建并进入build文件夹**
+```bash
+mkdir build
+cd build
+```
+
+3. **配置和编译**
+```bash
+cmake ..
+make -j4
+```
+
+### 依赖库安装
+
+在编译之前，需要安装以下依赖库：
+
+- **ONNX Runtime C++库**：用于ONNX模型推理
+- **OpenCV**：用于图像处理
+
+具体安装方法请参考下方的 [C++ 依赖安装与环境配置](#c-依赖安装与环境配置) 部分。
+
 > **注意：C++推理和benchmark命令中的ONNX权重路径、图片路径等也需根据实际情况修改！**
 
 ### 1. 推理（编译后可执行文件）
