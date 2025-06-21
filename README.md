@@ -169,6 +169,14 @@ make -j4
 
 ## VGG家族与RepVGG模型原理详解
 
+### RepVGG结构示意图
+
+![RepVGG架构示意图](figs/repvgg.png)
+
+**图释**：RepVGG架构示意图。RepVGG包含5个阶段，在每个阶段开始时通过步长为2的卷积进行下采样。图中仅显示了特定阶段的前4层。受ResNet启发，我们也使用identity分支和1×1分支，但仅用于训练阶段。
+
+> **图片来源**：CVPR 2021，丁宵汉等，"RepVGG: Making VGG-style ConvNets Great Again"
+
 ### 1. VGG网络推理原理详解
 
 VGG网络是一种典型的深层卷积神经网络，其推理流程如下：
